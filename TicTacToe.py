@@ -164,40 +164,61 @@ class TicTacToe():
         self.draw = True
         return True
 
+# AI uses the minimax algorithm in order to find the best move
 class AI():
+    # sets up the variables needed for the AI
     def setup(self):
         global board
         global psudoToe
         board = copy.deepcopy(game.getBoard())
         psudoToe = TicTacToe()
 
-    def minimax(self, isMaximizer, gameboard):
+    # the actual minimax algorithm
+    # a win is scored as 1, loss as -1, and draw as 0
+    def minimax(self, isMaximizer, gameboard, alpha, beta):
+        # first check if the current board state is a game over
+        # if it is score it and add it to the count
         if psudoToe.getGameOver(gameboard):
             psudoToe.endStatesCount += 1
             return psudoToe.getGameEndState()
 
+        # the AI will find all possible moves from the current board
+        # state, then make the moves, score the end state resulting
+        # from the move, then undo the move and try the next one
         scores = []
         if isMaximizer:
+            maxScore = -math.inf
             for moves in psudoToe.getPossibleMoves(gameboard):
                 psudoToe.aiMakeMove(moves, gameboard, isMaximizer)
-                scores.append(self.minimax(False, copy.deepcopy(gameboard)))
+                score = self.minimax(False, copy.deepcopy(gameboard), alpha, beta)
+                maxScore = max(score, maxScore)
+                alpha = max(score, alpha)
+                if beta <= alpha:
+                    break
                 psudoToe.undoMove(gameboard, moves)
                 psudoToe.resetGameStates()
-            return max(scores)
+            return maxScore
         else:
+            minScore = math.inf
             for moves in psudoToe.getPossibleMoves(gameboard):
                 psudoToe.aiMakeMove(moves, gameboard, isMaximizer)
-                scores.append(self.minimax(True, copy.deepcopy(gameboard)))
+                score = self.minimax(True, copy.deepcopy(gameboard), alpha, beta)
+                minScore = min(score, minScore)
+                beta = min(score, beta)
+                if beta <= alpha:
+                    break
                 psudoToe.undoMove(gameboard, moves)
                 psudoToe.resetGameStates()
-            return min(scores)
+            return minScore
 
+    # go starts the minimax process and handels finding the best move
+    # then actually makes that move
     def go(self):
         bestScore = -math.inf
         bestMove = None
         for moves in psudoToe.getPossibleMoves(board):
             psudoToe.aiMakeMove(moves, board, True)
-            score = self.minimax(False, copy.deepcopy(board))
+            score = self.minimax(False, copy.deepcopy(board), -math.inf, math.inf)
             psudoToe.undoMove(board, moves)
             psudoToe.resetGameStates()
             if score > bestScore:
